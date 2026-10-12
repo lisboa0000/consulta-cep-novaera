@@ -11,6 +11,8 @@ SpringCep é uma API REST desenvolvida em Spring Boot que permite consultar info
 - **Spring Web** - Módulo para criação de APIs REST
 - **Maven** - Gerenciador de dependências e build
 - **RestTemplate** - Cliente HTTP para consumir APIs externas
+- **JUnit 5 / MockMvc / Mockito** - Testes automatizados
+- **HTML, CSS e JavaScript** - Tela de consulta (front-end)
 
 ## 🔌 API Consumida
 
@@ -28,14 +30,20 @@ SpringCep/
 │   ├── main/
 │   │   ├── java/
 │   │   │   └── com/brescolanovaeratech/SpringCep/
+│   │   │       ├── config/
+│   │   │       │   └── RestTemplateConfig.java
 │   │   │       ├── controller/
 │   │   │       │   └── ConsultaController.java
 │   │   │       ├── domain/
 │   │   │       │   └── CepDomain.java
 │   │   │       └── SpringCepApplication.java
 │   │   └── resources/
+│   │       ├── static/
+│   │       │   └── index.html
 │   │       └── application.properties
 │   └── test/
+│       └── java/.../controller/ConsultaControllerTest.java
+├── docs/
 └── pom.xml
 ```
 
@@ -51,6 +59,12 @@ SpringCep/
 3. Execute o projeto: `./mvnw spring-boot:run`
 4. A aplicação estará disponível em: `http://localhost:8080`
 
+No Windows, use `.\mvnw.cmd spring-boot:run`. É necessário ter o `JAVA_HOME` apontando para um JDK 17+.
+
+## 🖥️ Tela de Consulta
+
+Com o servidor rodando, acesse `http://localhost:8080/` para usar a tela de consulta. Ela chama a própria API (`/consulta/{cep}`) e exibe o endereço completo.
+
 ## 📡 Endpoints da API
 
 ### Consulta de CEP
@@ -58,6 +72,14 @@ SpringCep/
 - **Parâmetro**: `cep` - CEP no formato: 00000000
 - **Exemplo**: `GET /consulta/01001000`
 - **Resposta**: Objeto com informações do endereço
+
+### Códigos de resposta
+
+| Status | Quando acontece |
+|---|---|
+| `200` | CEP encontrado |
+| `400` | CEP inválido (não tem exatamente 8 dígitos numéricos) |
+| `404` | CEP não encontrado no ViaCEP |
 
 ## 📊 Exemplo de Resposta
 
@@ -80,6 +102,7 @@ SpringCep/
 
 - **Controller Layer**: Gerencia as requisições HTTP
 - **Domain Layer**: Define as entidades do sistema
+- **Config Layer**: Declara o `RestTemplate` como bean
 - **Service Layer**: Lógica de negócio (a ser implementada)
 - **Repository Layer**: Acesso a dados (a ser implementado)
 
@@ -94,13 +117,17 @@ Execute os testes com:
 ./mvnw test
 ```
 
+No Windows: `.\mvnw.cmd test`.
+
+Os testes do controller usam `MockMvc` e simulam o ViaCEP, então não dependem de internet. Cobrem CEP válido, CEP inexistente (404), CEP curto (400) e CEP com letras (400).
+
 ## 📈 Melhorias Futuras
 
 - [ ] Implementar cache para consultas frequentes
-- [ ] Adicionar validação de CEP
-- [ ] Implementar tratamento de erros
+- [x] Adicionar validação de CEP
+- [x] Implementar tratamento de erros
 - [ ] Adicionar documentação com Swagger
-- [ ] Implementar testes unitários e de integração
+- [x] Implementar testes do controller (MockMvc)
 - [ ] Adicionar logging estruturado
 - [ ] Implementar métricas com Actuator
 
