@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consulta de CEP</title>
+<style>
+  :root { --blue: #2f80d8; --bg: #f1f5f9; --card: #fff; --text: #1e293b; --muted: #64748b; --border: #e2e8f0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 16px; background: var(--bg); color: var(--text);
+         font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 560px; margin: 0 auto; display: grid; gap: 20px; }
+  .card { background: var(--card); border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(15,23,42,.08); }
+  h1 { margin: 0 0 6px; text-align: center; color: var(--blue); font-size: 28px; }
+  .sub { margin: 0 0 20px; text-align: center; color: var(--muted); font-size: 14px; }
+  form { display: flex; gap: 12px; }
+  input { flex: 1; padding: 12px 14px; font-size: 16px; border: 2px solid var(--blue); border-radius: 8px; outline: none; }
+  button { padding: 12px 20px; font-size: 15px; font-weight: 600; color: #fff; background: var(--blue);
+           border: 0; border-radius: 8px; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: wait; }
+  h2 { margin: 0 0 20px; font-size: 18px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
+  .label { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .value { font-size: 16px; font-weight: 500; }
+  .erro { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; }
+  [hidden] { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <section class="card">
+    <h1>Consulta de CEP</h1>
+    <p class="sub">Digite o CEP para consultar o endereço completo</p>
+    <form id="form">
+      <input id="cep" placeholder="00000-000" inputmode="numeric" maxlength="9" autofocus>
+      <button id="btn" type="submit">Buscar</button>
+    </form>
+  </section>
+
+  <section id="erro" class="card erro" hidden></section>
+
+  <section id="resultado" class="card" hidden>
+    <h2>Endereço Encontrado</h2>
+    <div class="grid" id="grid"></div>
+  </section>
+</main>
+
+<script>
+  const campos = [
+    ['CEP', 'cep'], ['DDD', 'ddd'],
+    ['Logradouro', 'logradouro'], ['IBGE', 'ibge'],
+    ['Bairro', 'bairro'], ['SIAFI', 'siafi'],
+    ['Cidade', 'localidade'], ['Estado', 'estado'],
+    ['UF', 'uf'], ['Região', 'regiao'],
+  ];
+  const form = document.getElementById('form');
+  const input = document.getElementById('cep');
+  const btn = document.getElementById('btn');
+  const erro = document.getElementById('erro');
+  const resultado = document.getElementById('resultado');
+  const grid = document.getElementById('grid');
+
+  input.addEventListener('input', () => {
+    const d = input.value.replace(/\D/g, '').slice(0, 8);
+    input.value = d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d;
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    erro.hidden = resultado.hidden = true;
+    const cep = input.value.replace(/\D/g, '');
+    btn.disabled = true;
+    try {
+      const resp = await fetch('/consulta/' + cep);
+      if (resp.status === 400) throw new Error('CEP inválido: informe 8 dígitos.');
+      if (resp.status === 404) throw new Error('CEP não encontrado.');
+      if (!resp.ok) throw new Error('Erro ao consultar o CEP. Tente novamente.');
+      mostrar(await resp.json());
+    } catch (err) {
+      erro.textContent = err.message;
+      erro.hidden = false;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function mostrar(dados) {
+    grid.replaceChildren();
+    for (const [rotulo, chave] of campos) {
+      const item = document.createElement('div');
+      const l = document.createElement('div');
+      const v = document.createElement('div');
+      l.className = 'label'; l.textContent = rotulo;
+      v.className = 'value'; v.textContent = dados[chave] || '—';
+      item.append(l, v);
+      grid.append(item);
+    }
+    resultado.hidden = false;
+  }
+</script>
+</body>
+</html>
